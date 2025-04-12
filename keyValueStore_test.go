@@ -1,14 +1,21 @@
 package goKeyValueStore_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/richi0/goKeyValueStore"
 )
 
+const CACHE_DIR = "test_dir_cache"
+
 func getTestStore() *goKeyValueStore.KeyValueStore {
-	store := goKeyValueStore.NewKeyValueStore(0.5)
+	os.RemoveAll(CACHE_DIR)
+	store, err := goKeyValueStore.NewKeyValueStore(0.5, CACHE_DIR)
+	if err != nil {
+		panic(err)
+	}
 	store.Set("key1", "value1", 100)
 	store.Set("key2", "value2", 100)
 	store.Set("key3", "value3", 100)
@@ -84,6 +91,30 @@ func TestKeyValueStoreClean(t *testing.T) {
 	if store.Length() != 0 {
 		t.Errorf("Expected length to be 0, got %d", store.Length())
 	}
+	entries, err := os.ReadDir(CACHE_DIR)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(entries) != 0 {
+		t.Error("All files should be removed")
+	}
+}
+
+func TestKeyValueStoreCleanDetails(t *testing.T) {
+	store := getTestStore()
+	store.Set("key4", "value4", 1200)
+	time.Sleep(1 * time.Second)
+	if store.Length() != 1 {
+		t.Errorf("Expected length to be 1, got %d", store.Length())
+	}
+	entries, err := os.ReadDir(CACHE_DIR)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(entries) != 1 {
+		t.Error("All files should be removed")
+	}
+	time.Sleep(1 * time.Second)
 }
 
 type testStruct struct {
