@@ -22,6 +22,24 @@ func getTestStore() *goKeyValueStore.KeyValueStore {
 	return store
 }
 
+type CacheData struct {
+	ID   int
+	Name string
+	List []int
+}
+
+func getTestStoreObject() *goKeyValueStore.KeyValueStore {
+	os.RemoveAll(CACHE_DIR)
+	store, err := goKeyValueStore.NewKeyValueStore(0.5, CACHE_DIR)
+	if err != nil {
+		panic(err)
+	}
+	store.Set("key1", CacheData{ID: 1, Name: "value1", List: []int{1, 2, 3}}, 100)
+	store.Set("key2", CacheData{ID: 2, Name: "value2", List: []int{4, 5, 6}}, 100)
+	store.Set("key3", CacheData{ID: 3, Name: "value3", List: []int{7, 8, 9}}, 100)
+	return store
+}
+
 func TestKeyValueStoreLength(t *testing.T) {
 	store := getTestStore()
 	if store.Length() != 3 {
@@ -135,5 +153,33 @@ func TestSetTypeAsValue(t *testing.T) {
 	}
 	if testData.Age != 30 {
 		t.Errorf("Expected 30, got %d", testData.Age)
+	}
+}
+
+func TestKeyValueStoreLengthObject(t *testing.T) {
+	store := getTestStoreObject()
+	if store.Length() != 3 {
+		t.Errorf("Expected length to be 3, got %d", store.Length())
+	}
+}
+
+func TestKeyValueStoreGetObject(t *testing.T) {
+	store := getTestStoreObject()
+	val, ok := store.Get("key1")
+	if !ok {
+		t.Errorf("Expected key1 to be present")
+	}
+	value, ok := val.(CacheData)
+	if !ok {
+		t.Errorf("Expected type cast to be ok")
+	}
+	if value.Name != "value1" {
+		t.Errorf("Expected value1, got %s", value.Name)
+	}
+	if value.ID != 1 {
+		t.Errorf("Expected 1, got %d", value.ID)
+	}
+	if len(value.List) != 3 {
+		t.Errorf("Expected 3, got %d", len(value.List))
 	}
 }
